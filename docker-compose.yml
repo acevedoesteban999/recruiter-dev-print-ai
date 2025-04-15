@@ -1,0 +1,75 @@
+services:
+ redis:
+   image: redis:6.2
+   container_name: recruiter-dev-redis
+   ports:
+     - "6379:6379"
+   volumes:
+     - redis_data:/data
+ selenium:
+   image: selenium/standalone-chrome:latest
+   container_name: recruiter-dev-selenium
+   ports:
+     - "14440:4444"
+   environment:
+     - SE_NODE_ENABLE_MANAGED_DOWNLOADS=true
+     - SE_OPTS=--enable-managed-downloads true
+     - SE_LOG_LEVEL=INFO
+   #      - SE_BROWSER_ARGS_INCOGNITO=--incognitos
+   restart: always
+   shm_size: 4gb
+
+
+ backend:
+   build:
+     context: ./backend
+   container_name: recruiter-dev-backend
+   command: poetry run uvicorn backend.app.main:app --host 0.0.0.0 --port 7013
+   ports:
+     - "18000:7013"
+   volumes:
+     - ./backend:/app
+   depends_on:
+     - redis
+   environment:
+     - REDIS_HOST=recruiter-dev-redis
+     - REDIS_PORT=6379
+     - REMOTE_DRIVER_URL=recruiter-dev-selenium
+
+
+ frontend:
+   build:
+     context: ./frontend
+   container_name: recruiter-dev-frontend
+   ports:
+     - "3000:3000"
+   volumes:
+     - ./frontend:/app
+   depends_on:
+    - n8n
+
+
+ n8n:
+   image: n8nio/n8n
+   container_name: recruiter-dev-n8n
+   ports:
+     - "5678:5678"
+   environment:
+     - N8N_BASIC_AUTH_ACTIVE=true
+     - N8N_BASIC_AUTH_USER=admin
+     - N8N_BASIC_AUTH_PASSWORD=admin
+     - N8N_HOST=n8n
+     - N8N_PORT=5678
+     - REDIS_HOST=redis
+     - REDIS_PORT=6379
+     - N8N_SECURE_COOKIE=false
+   volumes:
+     - n8n_data:/home/node/.n8n
+   depends_on:
+     - redis
+#      - backend
+
+
+volumes:
+ redis_data:
+ n8n_data:
