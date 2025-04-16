@@ -10,11 +10,17 @@ requires-python = ">=3.10"
 dependencies = [
     "fastapi (>=0.115.12,<0.116.0)",
     "redis (>=5.2.1,<6.0.0)",
-    "beautifulsoup4 (>=4.13.4,<5.0.0)"
+    "beautifulsoup4 (>=4.13.4,<5.0.0)",
+    "selenium (>=4.31.0,<5.0.0)",
+    "python-dotenv (>=1.1.0,<2.0.0)"
 ]
 
 [tool.poetry]
 packages = [{include = "recruiter_dev_print_ai", from = "src"}]
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.3.5"
+flake8 = "^7.2.0"
 
 [virtualenvs]
 in-project = true
