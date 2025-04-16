@@ -46,8 +46,8 @@ class BookScraper:
         chrome_options.add_argument("--headless")
         chrome_options.add_argument("--no-sandbox")
         return webdriver.Chrome(
-            service=Service(webdriver.ChromeService()),
-            options=chrome_options,
+            # service=Service(webdriver.ChromeService()),
+            # options=chrome_options,
         )
 
     def _scrape_book_details(self, book_url: str) -> Dict:
