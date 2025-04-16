@@ -11,8 +11,11 @@ from selenium.webdriver.firefox.options import Options
 from webdriver_manager.firefox import GeckoDriverManager
 
 from selenium.webdriver.common.by import By
+
+from selenium.webdriver.support.ui import WebDriverWait
 import redis
 from dotenv import load_dotenv
+from urllib.parse import urljoin
 
 # Configuración de logging (como requerido)
 logging.basicConfig(
@@ -36,6 +39,9 @@ class BookScraper:
             port=os.getenv("REDIS_PORT",6379),
             db=0
         )
+        if(not self.redis_client.ping()):
+            logger.error(f"Redis Error: Server dont response correctly")
+            
         self.driver = self._init_selenium()
         self.scraped_books = 0
         self.BASE_URL = str(os.getenv("BASE_URL",""))
@@ -53,16 +59,16 @@ class BookScraper:
             options=_options,
         )
 
-    def _scrape_book_details(self, book_url: str) -> Dict:
+    def _scrape_book_details(self, book_url: str):
         self.driver.get(book_url)
-        time.sleep(1)  
         soup = BeautifulSoup(self.driver.page_source, "html.parser")
-        
-        title = soup.find("h1").text
-        price = float(soup.find("p", class_="price_color").text[1:]) 
-        category = soup.find("ul", class_="breadcrumb").find_all("a")[2].text
-        image_url = self.BASE_URL + soup.find("img")["src"].replace("../", "")
-        
+        try:
+            title = soup.find("h1").text
+            price = float(soup.find("p", class_="price_color").text[1:]) 
+            category = soup.find("ul", class_="breadcrumb").find_all("a")[2].text
+            image_url = self.BASE_URL + soup.find("img")["src"].replace("../", "")
+        except:
+            return False
         return {
             "title": title,
             "price": price,
@@ -75,39 +81,42 @@ class BookScraper:
         try:
             self.driver.get(self.BASE_URL)
             
-            
             while self.scraped_books < self.MAX_BOOKS:
                 soup = BeautifulSoup(self.driver.page_source, "html.parser")
                 page_books = soup.find_all("article", class_="product_pod")
-                
+                current_url = self.driver.current_url
+                try:
+                    next_url = self.driver.find_element(By.CSS_SELECTOR, "li.next > a").get_attribute('href')
+                except:
+                    next_url = None
                 for _,article in enumerate(page_books):
                     price = float(article.find("p", class_="price_color").text[1:])
                     if price >= self.MAX_PRICE:
                         continue
-                    book_url:str= self.BASE_URL + str(article.find("div",class_="image_container").find("a")["href"])
+                    book_url:str= article.find("div",class_="image_container").find("a")["href"]
+                    book_url = urljoin(current_url, book_url)
                     book_data = self._scrape_book_details(book_url)
-                    
+                    if not book_data:
+                        continue
                     book_id = book_url.split('_')[-1].split('/')[0]
                     self.redis_client.set(f"book:{book_id}", json.dumps(book_data))
                     self.scraped_books += 1
                     logger.info(f"Book #{self.scraped_books}: {book_data['title']} (£{book_data['price']})")
-                    
-                    self.scraped_books += 1
                     if self.scraped_books >= self.MAX_BOOKS:
                         break
                 if self.scraped_books < self.MIN_BOOKS:
-                    next_btn = self.driver.find_elements(By.CSS_SELECTOR, "li.next a")
-                    if not next_btn:
+                    if next_url:
+                        self.driver.get(next_url)
+                    else:
                         logger.warning(f"Unsatisfied minimal books; Books find: {self.scraped_books}")
                         break
-                    next_btn[0].click()
-                    time.sleep(2)
                 else:
                     break
 
-            logger.info(f"Scraping Commpleted. Books find: {self.scraped_books}")
         except Exception as e:
             logger.error(f"Scraping Error: {e}")
+        
+        logger.info(f"Scraping Commpleted. Books find: {self.scraped_books}")
         self.driver.quit()
             
 if __name__ == "__main__":
