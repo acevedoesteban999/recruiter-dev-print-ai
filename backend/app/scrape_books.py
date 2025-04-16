@@ -5,10 +5,12 @@ import logging
 from typing import Dict
 from bs4 import BeautifulSoup
 from selenium import webdriver
-from selenium.webdriver.chrome.service import Service
+
+from selenium.webdriver.firefox.service import Service 
+from selenium.webdriver.firefox.options import Options
+from webdriver_manager.firefox import GeckoDriverManager
+
 from selenium.webdriver.common.by import By
-from selenium.webdriver.chrome.options import Options
-from selenium.common.exceptions import WebDriverException
 import redis
 from dotenv import load_dotenv
 
@@ -42,18 +44,19 @@ class BookScraper:
         self.MIN_BOOKS = self.__str_2_int(os.getenv("MIN_BOOKS","50"))
 
     def _init_selenium(self):
-        chrome_options = Options()
-        chrome_options.add_argument("--headless")
-        chrome_options.add_argument("--no-sandbox")
-        return webdriver.Chrome(
-            # service=Service(webdriver.ChromeService()),
-            # options=chrome_options,
+        _options = Options()
+        _options.binary_location = r"C:\Program Files\Mozilla Firefox\firefox.exe"
+        # _options.add_argument("--headless")
+        # _options.add_argument("--no-sandbox")
+        return webdriver.Firefox(
+            service=Service(GeckoDriverManager().install()),
+            options=_options,
         )
 
     def _scrape_book_details(self, book_url: str) -> Dict:
         self.driver.get(book_url)
         time.sleep(1)  
-        soup = BeautifulSoup(self.driver.page_source, "lxml")
+        soup = BeautifulSoup(self.driver.page_source, "html.parser")
         
         title = soup.find("h1").text
         price = float(soup.find("p", class_="price_color").text[1:]) 
@@ -74,17 +77,17 @@ class BookScraper:
             
             
             while self.scraped_books < self.MAX_BOOKS:
-                soup = BeautifulSoup(self.driver.page_source, "lxml")
+                soup = BeautifulSoup(self.driver.page_source, "html.parser")
                 page_books = soup.find_all("article", class_="product_pod")
                 
-                for _,book in enumerate(page_books):
-                    price = float(book.find("p", class_="price_color").text[1:])
+                for _,article in enumerate(page_books):
+                    price = float(article.find("p", class_="price_color").text[1:])
                     if price >= self.MAX_PRICE:
                         continue
-                    book_url = self.BASE_URL + "catalogue/" + book.find("h3").find("a")["href"].replace("../", "")
+                    book_url:str= self.BASE_URL + str(article.find("div",class_="image_container").find("a")["href"])
                     book_data = self._scrape_book_details(book_url)
                     
-                    book_id = hash(book_url) % 1000000
+                    book_id = book_url.split('_')[-1].split('/')[0]
                     self.redis_client.set(f"book:{book_id}", json.dumps(book_data))
                     self.scraped_books += 1
                     logger.info(f"Book #{self.scraped_books}: {book_data['title']} (£{book_data['price']})")
