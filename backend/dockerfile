@@ -3,22 +3,14 @@ FROM python:3.10-slim
 WORKDIR /app
 
 RUN apt-get update && apt-get install -y \
-    gcc \
-    python3-dev \
-    curl \
-    tar \
     wget \
-    firefox-esr \
-    && rm -rf /var/lib/apt/lists/*
+    unzip \
+    && \
+    wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb && \
+    apt install -y ./google-chrome-stable_current_amd64.deb && \
+    rm google-chrome-stable_current_amd64.deb && \
+    apt-get clean
 
-
-RUN curl -s https://api.github.com/repos/mozilla/geckodriver/releases/latest \
-    | grep "browser_download_url.*linux64" \
-    | cut -d '"' -f 4 \
-    | wget -O geckodriver.tar.gz -i - \
-    && tar -xvzf geckodriver.tar.gz -C /usr/local/bin \
-    && chmod +x /usr/local/bin/geckodriver \
-    && rm geckodriver.tar.gz
 
 RUN pip install poetry
 
