@@ -31,7 +31,7 @@ services:
      - redis
      - selenium
    environment:
-     - REDIS_HOST=localhost
+     - REDIS_HOST=redis
      - REDIS_PORT=6379
      - FASTAPI_HOST=localhost
      - FASTAPI_PORT=7013
