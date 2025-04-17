@@ -5,11 +5,14 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y \
     gcc \
     python3-dev \
+    curl \
+    tar \
     wget \
     firefox-esr \
     && rm -rf /var/lib/apt/lists/*
 
-    RUN curl -s https://api.github.com/repos/mozilla/geckodriver/releases/latest \
+
+RUN curl -s https://api.github.com/repos/mozilla/geckodriver/releases/latest \
     | grep "browser_download_url.*linux64" \
     | cut -d '"' -f 4 \
     | wget -O geckodriver.tar.gz -i - \
