@@ -1,6 +1,6 @@
 import logging
 import os
-from src.scrape_base import ScrapeBase
+from .src.scrape_base import ScrapeBase
 from selenium.webdriver.common.by import By
 
 # Configuración de logging

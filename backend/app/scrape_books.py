@@ -1,7 +1,7 @@
 import os
 import json
 import logging
-from src.scrape_base import ScrapeBase
+from .src.scrape_base import ScrapeBase
 from bs4 import BeautifulSoup
 
 from selenium.webdriver.common.by import By
@@ -90,6 +90,8 @@ class BookScraper(ScrapeBase):
                         f"Book #{self.scraped_books}: {book_data['title']} (£{book_data['price']})")
                     if self.scraped_books >= self.MAX_BOOKS:
                         break
+                logger.warning(
+                            f"Scraped {self.scraped_books} books in page {current_url}")
                 if self.scraped_books < self.MIN_BOOKS:
                     if next_url:
                         self.driver.get(next_url)
