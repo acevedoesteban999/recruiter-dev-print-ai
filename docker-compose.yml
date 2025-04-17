@@ -29,6 +29,9 @@ services:
      - ./backend:/app
    depends_on:
      - redis
+     - selenium
+     - n8n
+     - frontend
    environment:
      - REDIS_HOST=localhost
      - REDIS_PORT=6379
@@ -69,7 +72,7 @@ services:
      - n8n_data:/home/node/.n8n
    depends_on:
      - redis
-#      - backend
+     - backend
 
 
 volumes:
