@@ -30,7 +30,6 @@ services:
    depends_on:
      - redis
      - selenium
-     - frontend
    environment:
      - REDIS_HOST=localhost
      - REDIS_PORT=6379
