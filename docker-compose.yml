@@ -33,13 +33,12 @@ services:
    environment:
      - REDIS_HOST=redis
      - REDIS_PORT=6379
-     - FASTAPI_HOST=localhost
+     - FASTAPI_HOST=backend
      - FASTAPI_PORT=7013
-     - WEBDRIVER_PATH= /usr/local/bin/geckodriver
      - BASE_BOOKS_URL=https://books.toscrape.com/
      - BASE_NEWS_URL=https://news.ycombinator.com/
      - MAX_PRICE=20  
-     - MIN_BOOKS=2  
+     - MIN_BOOKS=50  
      - MAX_BOOKS=100 
 
  frontend:
