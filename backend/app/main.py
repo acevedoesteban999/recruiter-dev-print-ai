@@ -125,8 +125,8 @@ async def search_books(
             if title:
                 match = match and (title.lower() in book["title"].lower())
             if category:
-                match = match and (category.lower() ==
-                                   book["category"].lower())
+                match = match and (category.lower()
+                                   == book["category"].lower())
             if max_price is not None:
                 match = match and (book["price"] <= max_price)
 
@@ -182,7 +182,8 @@ async def get_books(category: Optional[str] = None):
             book_data = redis_client.get(key)
             if book_data:
                 book = json.loads(book_data)
-                if not category or category.lower() == book["category"].lower():
+                if not category \
+                        or category.lower() == book["category"].lower():
                     books.append(Book(
                         id=key.decode().split(":")[1],
                         title=book["title"],
