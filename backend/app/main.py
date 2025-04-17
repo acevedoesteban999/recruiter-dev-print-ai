@@ -6,8 +6,8 @@ import redis
 import json
 import os
 from typing import List, Optional
-from scrape_hn import HackerNewsScraper
-from scrape_books import BookScraper
+from .scrape_hn import HackerNewsScraper
+from .scrape_books import BookScraper
 import logging
 from contextlib import asynccontextmanager
 
@@ -36,6 +36,12 @@ class HNStory(BaseModel):
 # Redis configuration
 redis_host = os.getenv("REDIS_HOST", "redis")
 redis_port = int(os.getenv("REDIS_PORT", 6379))
+
+redis_client = redis.Redis(
+    host=os.getenv("REDIS_HOST", 'localhost'),
+    port=os.getenv("REDIS_PORT"),
+    db=0
+)
 
 app = FastAPI(
     title="Print.AI Technical Assessment API",
@@ -76,26 +82,35 @@ async def search_books(
     max_price: Optional[float] = 20.0
 ):
     """
-    Search books by title or category with max price filter (default £20)
+    Search books by title, category and max price (default £20)
+    Supports partial matches in title (case insensitive)
+    
     Examples:
     - /books/search?title=mystery
     - /books/search?category=fiction&max_price=15
+    - /books/search?title=harry&category=fantasy
     """
     try:
         books = []
-        for key in app.state.redis.scan_iter("book:*"):
-            book_data = app.state.redis.get(key)
-            if book_data:
-                book = json.loads(book_data)
-
-                # Apply filters
-                if title and title.lower() not in book["title"].lower():
-                    continue
-                if category and category.lower() != book["category"].lower():
-                    continue
-                if max_price and book["price"] > max_price:
-                    continue
-
+        for key in redis_client.scan_iter("book:*"):
+            book_data = redis_client.get(key)
+            if not book_data:
+                continue
+                
+            book = json.loads(book_data)
+            
+            match = True
+            
+            if title:
+                match = match and (title.lower() in book["title"].lower())
+            
+            if category:
+                match = match and (category.lower() == book["category"].lower())
+            
+            if max_price is not None:
+                match = match and (book["price"] <= max_price)
+            
+            if match:
                 books.append(Book(
                     id=key.decode().split(":")[1],
                     title=book["title"],
@@ -112,6 +127,8 @@ async def search_books(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Error searching books"
         )
+
+
 
 @app.get("/headlines", response_model=List[HNStory])
 async def get_headlines():
@@ -141,8 +158,8 @@ async def get_books(category: Optional[str] = None):
     """
     try:
         books = []
-        for key in app.state.redis.scan_iter("book:*"):
-            book_data = app.state.redis.get(key)
+        for key in redis_client.scan_iter("book:*"):
+            book_data = redis_client.get(key)
             if book_data:
                 book = json.loads(book_data)
                 if not category or category.lower() == book["category"].lower():
@@ -162,22 +179,6 @@ async def get_books(category: Optional[str] = None):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Error retrieving books"
         )
-
-# @app.get("/health", include_in_schema=False)
-# async def health_check():
-#     """Health check endpoint to verify API is running"""
-#     try:
-#         if not app.state.redis.ping():
-#             raise HTTPException(
-#                 status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-#                 detail="Redis is not available"
-#             )
-#         return {"status": "healthy", "services": {"redis": "ok"}}
-#     except Exception as e:
-#         raise HTTPException(
-#             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-#             detail=f"Service unavailable: {str(e)}"
-#         )
 
 @app.exception_handler(Exception)
 async def global_exception_handler(request, exc):

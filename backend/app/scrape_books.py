@@ -1,7 +1,7 @@
 import os
 import json
 import logging
-from src.scrape_base import ScrapeBase
+from .src.scrape_base import ScrapeBase
 from bs4 import BeautifulSoup
 
 from selenium.webdriver.common.by import By
