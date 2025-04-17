@@ -7,7 +7,7 @@ services:
    volumes:
      - redis_data:/data
  selenium:
-   image: selenium/standalone-chrome:latest
+   image: selenium/standalone-firefox:latest
    container_name: recruiter-dev-selenium
    ports:
      - "14440:4444"
@@ -18,24 +18,28 @@ services:
    #      - SE_BROWSER_ARGS_INCOGNITO=--incognitos
    restart: always
    shm_size: 4gb
-
-
  backend:
    build:
      context: ./backend
    container_name: recruiter-dev-backend
-   command: poetry run uvicorn backend.app.main:app --host 0.0.0.0 --port 7013
+   command: poetry run uvicorn app.main:app --host 0.0.0.0 --port 7013
    ports:
      - "18000:7013"
    volumes:
      - ./backend:/app
    depends_on:
      - redis
+     - selenium
    environment:
-     - REDIS_HOST=recruiter-dev-redis
+     - REDIS_HOST=redis
      - REDIS_PORT=6379
-     - REMOTE_DRIVER_URL=recruiter-dev-selenium
-
+     - FASTAPI_HOST=backend
+     - FASTAPI_PORT=7013
+     - BASE_BOOKS_URL=https://books.toscrape.com/
+     - BASE_NEWS_URL=https://news.ycombinator.com/
+     - MAX_PRICE=20  
+     - MIN_BOOKS=50  
+     - MAX_BOOKS=100 
 
  frontend:
    build:
@@ -44,11 +48,9 @@ services:
    ports:
      - "3000:3000"
    volumes:
-     - ./frontend:/app
+     - ./frontend/src:/app/src
    depends_on:
     - n8n
-
-
  n8n:
    image: n8nio/n8n
    container_name: recruiter-dev-n8n
@@ -67,7 +69,7 @@ services:
      - n8n_data:/home/node/.n8n
    depends_on:
      - redis
-#      - backend
+     - backend
 
 
 volumes:
