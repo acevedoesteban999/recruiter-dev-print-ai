@@ -19,6 +19,8 @@ class HackerNewsScraper(ScrapeBase):
         # Base URL from environment variables with fallback to empty string
         self.BASE_NEWS_URL = str(os.getenv("BASE_NEWS_URL", ""))
 
+    # TODO Addapt to n8n finaly development
+
     def scrape_top_stories(self, pages: int = 5):
         """
         Scrape top stories from Hacker News
