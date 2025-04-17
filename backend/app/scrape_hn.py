@@ -60,7 +60,7 @@ class HackerNewsScraper(ScrapeBase):
         return stories
 
 
-if __name__ == "__main__":
-    scraper = HackerNewsScraper()
-    headlines = scraper.scrape_top_stories()
-    scraper._close_selenium()
+# if __name__ == "__main__":
+#     scraper = HackerNewsScraper()
+#     headlines = scraper.scrape_top_stories()
+#     scraper._close_selenium()

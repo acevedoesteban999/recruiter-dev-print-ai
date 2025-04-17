@@ -115,7 +115,7 @@ class BookScraper(ScrapeBase):
             return 0
 
 
-if __name__ == "__main__":
-    scraper = BookScraper()
-    scraper.scrape_books()
-    scraper._close_selenium()
+# if __name__ == "__main__":
+#     scraper = BookScraper()
+#     scraper.scrape_books()
+#     scraper._close_selenium()

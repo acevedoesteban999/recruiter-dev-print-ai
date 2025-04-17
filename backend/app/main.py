@@ -19,6 +19,8 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Pydantic models for data validation
+
+
 class Book(BaseModel):
     id: str
     title: str
@@ -44,14 +46,14 @@ redis_client = redis.Redis(
 )
 
 
-
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     try:
-        await init_scraping()
+        if not os.getenv("DEV_MODE", False):
+            await init_scraping()
     except Exception:
         logger.error("Error during scraping initialization: lifespan")
-        
+
     yield
 
 app = FastAPI(
@@ -88,6 +90,7 @@ async def init_scraping():
             detail="Scraping initialization failed"
         )
 
+
 @app.get("/books/search", response_model=List[Book])
 async def search_books(
     title: Optional[str] = None,
@@ -97,7 +100,7 @@ async def search_books(
     """
     Search books by title, category and max price (default £20)
     Supports partial matches in title (case insensitive)
-    
+
     Examples:
     - /books/search?title=mystery
     - /books/search?category=fiction&max_price=15
@@ -109,20 +112,21 @@ async def search_books(
             book_data = redis_client.get(key)
             if not book_data:
                 continue
-                
+
             book = json.loads(book_data)
-            
+
             match = True
-            
+
             if title:
                 match = match and (title.lower() in book["title"].lower())
-            
+
             if category:
-                match = match and (category.lower() == book["category"].lower())
-            
+                match = match and (category.lower() ==
+                                   book["category"].lower())
+
             if max_price is not None:
                 match = match and (book["price"] <= max_price)
-            
+
             if match:
                 books.append(Book(
                     id=key.decode().split(":")[1],
@@ -140,6 +144,7 @@ async def search_books(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Error searching books"
         )
+
 
 @app.get("/headlines", response_model=List[HNStory])
 async def get_headlines():
@@ -160,6 +165,7 @@ async def get_headlines():
     finally:
         if 'scraper' in locals():
             scraper._close_selenium()
+
 
 @app.get("/books", response_model=List[Book])
 async def get_books(category: Optional[str] = None):
@@ -191,6 +197,7 @@ async def get_books(category: Optional[str] = None):
             detail="Error retrieving books"
         )
 
+
 @app.exception_handler(Exception)
 async def global_exception_handler(request, exc):
     """Global exception handler"""
@@ -205,5 +212,3 @@ async def global_exception_handler(request, exc):
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         content={"detail": "Internal server error"},
     )
-    
-    
