@@ -1,0 +1,6 @@
+[flake8]
+max-line-length = 120
+max-complexity = 20
+max-file-length = 150 
+exclude = .git,__pycache__,venv
+ignore = E203, W503  
