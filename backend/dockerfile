@@ -9,18 +9,22 @@ RUN apt-get update && apt-get install -y \
     firefox-esr \
     && rm -rf /var/lib/apt/lists/*
 
-RUN wget https://github.com/mozilla/geckodriver/releases/download/v0.32.0/geckodriver-v0.32.0-linux64.tar.gz \
-    && tar -xzf geckodriver-v0.32.0-linux64.tar.gz \
-    && mv geckodriver /usr/local/bin/ \
+RUN LATEST_RELEASE=$(curl -s https://api.github.com/repos/mozilla/geckodriver/releases/latest) \
+    && VERSION=$(echo "$LATEST_RELEASE" | grep -Po '"tag_name": "\K.*?(?=")') \
+    && DOWNLOAD_URL=$(echo "$LATEST_RELEASE" | grep -Po '"browser_download_url": "\K.*?(?=")' | grep linux64) \
+    && echo "Instalando Geckodriver $VERSION desde $DOWNLOAD_URL" \
+    && wget -O geckodriver.tar.gz "$DOWNLOAD_URL" \
+    && tar -xzf geckodriver.tar.gz -C /usr/local/bin \
     && chmod +x /usr/local/bin/geckodriver \
-    && rm geckodriver-v0.32.0-linux64.tar.gz
+    && geckodriver --version \
+    && rm geckodriver.tar.gz
 
 RUN pip install poetry
 
 COPY pyproject.toml poetry.lock ./
 
 RUN poetry config virtualenvs.create false && \
-    poetry install --no-dev --no-interaction --no-ansi
+    poetry install --no-interaction --no-ansi
 
 COPY . .
 
