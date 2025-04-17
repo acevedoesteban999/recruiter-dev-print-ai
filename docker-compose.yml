@@ -48,7 +48,7 @@ services:
    ports:
      - "3000:3000"
    volumes:
-     - ./frontend:/app
+     - ./frontend/src:/app/src
    depends_on:
     - n8n
  n8n:
