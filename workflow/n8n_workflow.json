@@ -1,0 +1,149 @@
+{
+    "name": "PrintAI Assistant Workflow",
+    "nodes": [
+      {
+        "parameters": {},
+        "name": "Start",
+        "type": "n8n-nodes-base.start",
+        "typeVersion": 1,
+        "position": [
+          250,
+          300
+        ]
+      },
+      {
+        "parameters": {
+          "path": "/ask",
+          "responseMode": "onReceived",
+          "options": {}
+        },
+        "name": "Webhook",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 1,
+        "position": [
+          450,
+          300
+        ],
+        "webhookId": "12345678-1234-1234-1234-123456789012"
+      },
+      {
+        "parameters": {
+          "agent": "clasificador",
+          "options": {}
+        },
+        "name": "AI Agent - Clasificar consulta",
+        "type": "n8n-nodes-base.aiAgent",
+        "typeVersion": 1,
+        "position": [
+          650,
+          300
+        ]
+      },
+      {
+        "parameters": {
+          "operation": "get",
+          "key": "={{ \"book:\" + $input.all()[0].json.book_id }}",
+          "options": {}
+        },
+        "name": "Redis - Obtener libro",
+        "type": "n8n-nodes-base.redis",
+        "typeVersion": 1,
+        "position": [
+          850,
+          200
+        ]
+      },
+      {
+        "parameters": {
+          "url": "http://backend:7013/headlines",
+          "options": {
+            "fullResponse": false
+          }
+        },
+        "name": "HTTP Request - Obtener noticias",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 1,
+        "position": [
+          850,
+          400
+        ]
+      },
+      {
+        "parameters": {
+          "options": {}
+        },
+        "name": "Response",
+        "type": "n8n-nodes-base.respondToWebhook",
+        "typeVersion": 1,
+        "position": [
+          1050,
+          300
+        ]
+      }
+    ],
+    "connections": {
+      "Start": {
+        "main": [
+          [
+            {
+              "node": "Webhook",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Webhook": {
+        "main": [
+          [
+            {
+              "node": "AI Agent - Clasificar consulta",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "AI Agent - Clasificar consulta": {
+        "main": [
+          [
+            {
+              "node": "Redis - Obtener libro",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "HTTP Request - Obtener noticias",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Redis - Obtener libro": {
+        "main": [
+          [
+            {
+              "node": "Response",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "HTTP Request - Obtener noticias": {
+        "main": [
+          [
+            {
+              "node": "Response",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "active": true,
+    "settings": {},
+    "id": "123"
+  }
