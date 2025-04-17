@@ -30,7 +30,6 @@ services:
    depends_on:
      - redis
      - selenium
-     - n8n
      - frontend
    environment:
      - REDIS_HOST=localhost
