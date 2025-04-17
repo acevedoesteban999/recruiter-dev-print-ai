@@ -9,14 +9,12 @@ RUN apt-get update && apt-get install -y \
     firefox-esr \
     && rm -rf /var/lib/apt/lists/*
 
-RUN LATEST_RELEASE=$(curl -s https://api.github.com/repos/mozilla/geckodriver/releases/latest) \
-    && VERSION=$(echo "$LATEST_RELEASE" | grep -Po '"tag_name": "\K.*?(?=")') \
-    && DOWNLOAD_URL=$(echo "$LATEST_RELEASE" | grep -Po '"browser_download_url": "\K.*?(?=")' | grep linux64) \
-    && echo "Instalando Geckodriver $VERSION desde $DOWNLOAD_URL" \
-    && wget -O geckodriver.tar.gz "$DOWNLOAD_URL" \
-    && tar -xzf geckodriver.tar.gz -C /usr/local/bin \
+    RUN curl -s https://api.github.com/repos/mozilla/geckodriver/releases/latest \
+    | grep "browser_download_url.*linux64" \
+    | cut -d '"' -f 4 \
+    | wget -O geckodriver.tar.gz -i - \
+    && tar -xvzf geckodriver.tar.gz -C /usr/local/bin \
     && chmod +x /usr/local/bin/geckodriver \
-    && geckodriver --version \
     && rm geckodriver.tar.gz
 
 RUN pip install poetry
