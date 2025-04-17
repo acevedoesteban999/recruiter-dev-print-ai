@@ -9,9 +9,9 @@ class ScrapeBase():
 
     def __init__(self) -> None:
         _options = Options()
-        _options.binary_location = str(os.getenv("FIREFOX_DRIVER_PATH", ""))
-        # _options.add_argument("--headless")
-        # _options.add_argument("--no-sandbox")
+        _options.binary_location = str(os.getenv("WEBDRIVER_PATH", ""))
+        _options.add_argument("--headless")
+        _options.add_argument("--no-sandbox")
         self.driver = webdriver.Firefox(
             service=Service(GeckoDriverManager().install()),
             options=_options,

@@ -10,9 +10,9 @@
           "backend.app.main:app",
           "--reload",
           "--host",
-          "0.0.0.0",
+          "localhost",
           "--port",
-          "8000"
+          "5324"
         ],
         "jinja": true,
         "justMyCode": false,

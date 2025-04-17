@@ -30,38 +30,44 @@ services:
    depends_on:
      - redis
    environment:
-     - REDIS_HOST=recruiter-dev-redis
+     - REDIS_HOST=localhost
      - REDIS_PORT=6379
-     - REMOTE_DRIVER_URL=recruiter-dev-selenium
- frontend:
-   build:
-     context: ./frontend
-   container_name: recruiter-dev-frontend
-   ports:
-     - "3000:3000"
-   volumes:
-     - ./frontend:/app
-   depends_on:
-    - n8n
- n8n:
-   image: n8nio/n8n
-   container_name: recruiter-dev-n8n
-   ports:
-     - "5678:5678"
-   environment:
-     - N8N_BASIC_AUTH_ACTIVE=true
-     - N8N_BASIC_AUTH_USER=admin
-     - N8N_BASIC_AUTH_PASSWORD=admin
-     - N8N_HOST=n8n
-     - N8N_PORT=5678
-     - REDIS_HOST=redis
-     - REDIS_PORT=6379
-     - N8N_SECURE_COOKIE=false
-   volumes:
-     - n8n_data:/home/node/.n8n
-   depends_on:
-     - redis
-#      - backend
+     - WEBDRIVER_PATH= /usr/local/bin/geckodriver
+     - BASE_BOOKS_URL=https://books.toscrape.com/
+     - BASE_NEWS_URL=https://news.ycombinator.com/
+     - MAX_PRICE=20  
+     - MIN_BOOKS=2  
+     - MAX_BOOKS=100 
+
+#  frontend:
+#    build:
+#      context: ./frontend
+#    container_name: recruiter-dev-frontend
+#    ports:
+#      - "3000:3000"
+#    volumes:
+#      - ./frontend:/app
+#    depends_on:
+#     - n8n
+#  n8n:
+#    image: n8nio/n8n
+#    container_name: recruiter-dev-n8n
+#    ports:
+#      - "5678:5678"
+#    environment:
+#      - N8N_BASIC_AUTH_ACTIVE=true
+#      - N8N_BASIC_AUTH_USER=admin
+#      - N8N_BASIC_AUTH_PASSWORD=admin
+#      - N8N_HOST=n8n
+#      - N8N_PORT=5678
+#      - REDIS_HOST=redis
+#      - REDIS_PORT=6379
+#      - N8N_SECURE_COOKIE=false
+#    volumes:
+#      - n8n_data:/home/node/.n8n
+#    depends_on:
+#      - redis
+# #      - backend
 
 
 volumes:

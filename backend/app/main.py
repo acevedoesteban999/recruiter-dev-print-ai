@@ -43,6 +43,17 @@ redis_client = redis.Redis(
     db=0
 )
 
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    try:
+        await init_scraping()
+    except Exception:
+        logger.error("Error during scraping initialization: lifespan")
+        
+    yield
+
 app = FastAPI(
     title="Print.AI Technical Assessment API",
     description="API for the web scraping and Hacker News integration system",
@@ -50,6 +61,7 @@ app = FastAPI(
     docs_url="/api/docs",
     redoc_url="/api/redoc",
     openapi_url="/api/openapi.json",
+    lifespan=lifespan,
 )
 
 # CORS configuration
@@ -60,6 +72,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
 @app.post("/init", status_code=status.HTTP_200_OK)
 async def init_scraping():
@@ -128,8 +141,6 @@ async def search_books(
             detail="Error searching books"
         )
 
-
-
 @app.get("/headlines", response_model=List[HNStory])
 async def get_headlines():
     """
@@ -194,3 +205,5 @@ async def global_exception_handler(request, exc):
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         content={"detail": "Internal server error"},
     )
+    
+    
