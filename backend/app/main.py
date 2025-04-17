@@ -11,17 +11,18 @@ from .scrape_books import BookScraper
 import logging
 from contextlib import asynccontextmanager
 
-# Configure logging
+# Configure logging as per project requirements
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger(__name__)
 
-# Pydantic models for data validation
+# Pydantic models for request/response validation
 
 
 class Book(BaseModel):
+    """Data model for book information"""
     id: str
     title: str
     price: float
@@ -30,55 +31,58 @@ class Book(BaseModel):
 
 
 class HNStory(BaseModel):
+    """Data model for Hacker News stories"""
     title: str
     score: int
     url: str
 
 
-# Redis configuration
-redis_host = os.getenv("REDIS_HOST", "redis")
-redis_port = int(os.getenv("REDIS_PORT", 6379))
+# Redis connection configuration
+redis_host = os.getenv("REDIS_HOST", "redis")  # Default to 'redis' for Docker
+redis_port = int(os.getenv("REDIS_PORT", 6379))  # Default Redis port
 
 redis_client = redis.Redis(
-    host=os.getenv("REDIS_HOST", 'localhost'),
-    port=os.getenv("REDIS_PORT"),
-    db=0
+    host=os.getenv("REDIS_HOST", 'localhost'),  # Fallback to localhost
+    port=os.getenv("REDIS_PORT"),  # Port from environment
+    db=0  # Default Redis database
 )
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    """Application lifespan management for initialization tasks"""
     try:
-        if not os.getenv("DEV_MODE", False):
+        if not os.getenv("DEV_MODE", False):  # Skip in development mode
             await init_scraping()
     except Exception:
         logger.error("Error during scraping initialization: lifespan")
+    yield  # Application runs here
+    # Cleanup could be added here if needed
 
-    yield
-
+# Initialize FastAPI application with metadata
 app = FastAPI(
     title="Print.AI Technical Assessment API",
     description="API for the web scraping and Hacker News integration system",
     version="1.0.0",
-    docs_url="/api/docs",
-    redoc_url="/api/redoc",
-    openapi_url="/api/openapi.json",
-    lifespan=lifespan,
+    docs_url="/api/docs",  # Custom docs path
+    redoc_url="/api/redoc",  # Custom ReDoc path
+    openapi_url="/api/openapi.json",  # Custom OpenAPI schema path
+    lifespan=lifespan,  # Attach lifespan manager
 )
 
-# CORS configuration
+# Configure CORS middleware for frontend access
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["*"],  # Allow all origins (adjust for production)
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["*"],  # Allow all HTTP methods
+    allow_headers=["*"],  # Allow all headers
 )
 
 
 @app.post("/init", status_code=status.HTTP_200_OK)
 async def init_scraping():
-    """Endpoint to force book re-scraping (maintained for compatibility)"""
+    """Endpoint to trigger book scraping (maintained for compatibility)"""
     try:
         book_scraper = BookScraper()
         book_scraper.scrape_books()
@@ -98,8 +102,8 @@ async def search_books(
     max_price: Optional[float] = 20.0
 ):
     """
-    Search books by title, category and max price (default £20)
-    Supports partial matches in title (case insensitive)
+    Search books with filters for title, category and max price
+    Supports partial title matches (case insensitive)
 
     Examples:
     - /books/search?title=mystery
@@ -108,28 +112,27 @@ async def search_books(
     """
     try:
         books = []
+        # Scan Redis for all book keys
         for key in redis_client.scan_iter("book:*"):
             book_data = redis_client.get(key)
             if not book_data:
                 continue
 
             book = json.loads(book_data)
-
             match = True
 
+            # Apply filters
             if title:
                 match = match and (title.lower() in book["title"].lower())
-
             if category:
                 match = match and (category.lower() ==
                                    book["category"].lower())
-
             if max_price is not None:
                 match = match and (book["price"] <= max_price)
 
             if match:
                 books.append(Book(
-                    id=key.decode().split(":")[1],
+                    id=key.decode().split(":")[1],  # Extract ID from Redis key
                     title=book["title"],
                     price=book["price"],
                     category=book["category"],
@@ -137,7 +140,6 @@ async def search_books(
                 ))
 
         return books
-
     except Exception as e:
         logger.error(f"Error in search_books: {str(e)}")
         raise HTTPException(
@@ -163,6 +165,7 @@ async def get_headlines():
             detail="Could not fetch Hacker News headlines"
         )
     finally:
+        # Ensure Selenium resources are cleaned up
         if 'scraper' in locals():
             scraper._close_selenium()
 
@@ -187,9 +190,7 @@ async def get_books(category: Optional[str] = None):
                         category=book["category"],
                         image_url=book["image_url"]
                     ))
-
         return books
-
     except Exception as e:
         logger.error(f"Error in get_books: {str(e)}")
         raise HTTPException(
@@ -200,13 +201,7 @@ async def get_books(category: Optional[str] = None):
 
 @app.exception_handler(Exception)
 async def global_exception_handler(request, exc):
-    """Global exception handler"""
-    logger.error(f"Unhandled exception: {str(exc)}")
-    return JSONResponse(
-        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-        content={"detail": "Internal server error"},
-    )
-    """Global exception handler"""
+    """Global exception handler for uncaught exceptions"""
     logger.error(f"Unhandled exception: {str(exc)}")
     return JSONResponse(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
