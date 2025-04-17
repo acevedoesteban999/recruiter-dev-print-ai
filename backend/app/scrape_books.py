@@ -36,7 +36,7 @@ class BookScraper:
     def __init__(self):
         self.redis_client = redis.Redis(
             host=os.getenv("REDIS_HOST",'localhost'),
-            port=os.getenv("REDIS_PORT",6379),
+            port=self.__str_2_int(os.getenv("REDIS_PORT")),
             db=0
         )
         if(not self.redis_client.ping()):
