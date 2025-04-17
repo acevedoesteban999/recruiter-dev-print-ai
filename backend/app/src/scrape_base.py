@@ -6,7 +6,7 @@ from webdriver_manager.firefox import GeckoDriverManager
 
 
 class ScrapeBase():
-
+    """This class implement init and close for selenium"""
     def __init__(self) -> None:
         _options = Options()
         _options.binary_location = str(os.getenv("WEBDRIVER_PATH", ""))
