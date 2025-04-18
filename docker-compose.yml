@@ -7,7 +7,7 @@ services:
    volumes:
      - redis_data:/data
  selenium:
-   image: selenium/standalone-firefox:latest
+   image: selenium/standalone-chrome:latest
    container_name: recruiter-dev-selenium
    ports:
      - "14440:4444"
@@ -58,7 +58,7 @@ services:
      - "5678:5678"
    environment:
      - N8N_BASIC_AUTH_ACTIVE=true
-     - N8N_BASIC_AUTH_USER=admin
+     - N8N_BASIC_AUTH_USER=admin@admin.com
      - N8N_BASIC_AUTH_PASSWORD=admin
      - N8N_HOST=n8n
      - N8N_PORT=5678
@@ -69,7 +69,7 @@ services:
      - n8n_data:/home/node/.n8n
    depends_on:
      - redis
-     - backend
+    #  - backend
 
 
 volumes:
