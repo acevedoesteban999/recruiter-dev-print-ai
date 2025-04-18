@@ -8,6 +8,7 @@ import redis
 from dotenv import load_dotenv
 from urllib.parse import urljoin
 
+
 # Configure logging as required by project specifications
 logging.basicConfig(
     level=logging.INFO,

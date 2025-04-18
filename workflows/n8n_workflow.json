@@ -1,0 +1,193 @@
+{
+  "name": "Print AI",
+  "nodes": [
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.query || $json.chatInput }}",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.8,
+      "position": [
+        -300,
+        160
+      ],
+      "id": "1e6df626-d363-4cda-b866-80484ab5fca1",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $json.sessionId || $json.headers.cookie.match(/session_id=([^;]+)/)[1] }}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        -180,
+        380
+      ],
+      "id": "1511f80f-5f0c-4ff2-80c5-ab64cbdd05d9",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "path": "ask",
+        "authentication": "basicAuth",
+        "responseMode": "lastNode",
+        "responseData": "allEntries",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -660,
+        160
+      ],
+      "id": "a0ca93e0-72ff-4a30-9d8b-fb74b2fdb891",
+      "name": "Webhook1",
+      "webhookId": "a3ffe3df-f1c9-47ef-be29-28111759d2be",
+      "notesInFlow": false,
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "NOGDJirX6J5aprhR",
+          "name": "Admin"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -660,
+        320
+      ],
+      "id": "9f89a208-3bdd-411a-9f6b-a9d45a8f9388",
+      "name": "When chat message received",
+      "webhookId": "2e0274f2-f4db-4488-a78f-92f6f8432096"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-1.5-pro",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -340,
+        380
+      ],
+      "id": "319efb9a-cd8e-43bc-af26-4a8d6eb3b45e",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "W3Iwrl7OQdS3NBW6",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "toolDescription": "usa esta herramienta para buscar los datos de libros ",
+        "url": "backend/books/search",
+        "sendQuery": true,
+        "parametersQuery": {
+          "values": [
+            {
+              "name": "name",
+              "valueProvider": "modelOptional"
+            },
+            {
+              "name": "category",
+              "valueProvider": "fieldValue"
+            },
+            {
+              "name": "price",
+              "valueProvider": "modelOptional"
+            }
+          ]
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolHttpRequest",
+      "typeVersion": 1.1,
+      "position": [
+        -20,
+        380
+      ],
+      "id": "0cc55d59-3e21-41c7-9890-46cbc65da399",
+      "name": "HTTP Request"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook1": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "af7e9d50-f778-4a98-966c-59b8d7a7f10b",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "2c595831d071203698002b56cc81b3e01822d2723fd1bac4be6df78e3354fa63"
+  },
+  "id": "7TB7gEz2RW5D4izc",
+  "tags": []
+}
