@@ -99,7 +99,7 @@ async def init_scraping():
 async def search_books(
     title: Optional[str] = None,
     category: Optional[str] = None,
-    max_price: Optional[float] = 20.0
+    max_price: Optional[float] = None
 ):
     """
     Search books with filters for title, category and max price

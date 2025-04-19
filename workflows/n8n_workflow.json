@@ -50,7 +50,7 @@
       "notesInFlow": false,
       "credentials": {
         "httpBasicAuth": {
-          "id": "NOGDJirX6J5aprhR",
+          "id": "ojR5aSO2ien5H0qT",
           "name": "Admin"
         }
       }
@@ -84,32 +84,15 @@
       "name": "Google Gemini Chat Model",
       "credentials": {
         "googlePalmApi": {
-          "id": "W3Iwrl7OQdS3NBW6",
+          "id": "PjG6M6yAlenuTAmm",
           "name": "Google Gemini(PaLM) Api account"
         }
       }
     },
     {
       "parameters": {
-        "toolDescription": "usa esta herramienta para buscar los datos de libros ",
-        "url": "backend/books/search",
-        "sendQuery": true,
-        "parametersQuery": {
-          "values": [
-            {
-              "name": "name",
-              "valueProvider": "modelOptional"
-            },
-            {
-              "name": "category",
-              "valueProvider": "fieldValue"
-            },
-            {
-              "name": "price",
-              "valueProvider": "modelOptional"
-            }
-          ]
-        }
+        "toolDescription": "Usa parámetros GET (name, category o price) con formato URL-encoded. Solo permite 1 filtro por consulta (ej: ?price=20). Para rangos, haz dos consultas separadas (ej: ?price_min=10 y ?price_max=20) y cruza los resultados. Ejemplo: /libros?category=ciencia-ficcion. Se debe manejar múltiples filtros ejecutando consultas individuales y combinando resultados",
+        "url": "=http://backend:7013/books/search?{filters}"
       },
       "type": "@n8n/n8n-nodes-langchain.toolHttpRequest",
       "typeVersion": 1.1,
@@ -179,14 +162,14 @@
       ]
     }
   },
-  "active": false,
+  "active": true,
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "af7e9d50-f778-4a98-966c-59b8d7a7f10b",
+  "versionId": "d632cc97-4714-4fc5-b831-173d2e5c9aab",
   "meta": {
     "templateCredsSetupCompleted": true,
-    "instanceId": "2c595831d071203698002b56cc81b3e01822d2723fd1bac4be6df78e3354fa63"
+    "instanceId": "92cbe56042d66e7ae9acdb6b81578c5d1362347243c896b6bf68d9f9d3e73af5"
   },
   "id": "7TB7gEz2RW5D4izc",
   "tags": []
