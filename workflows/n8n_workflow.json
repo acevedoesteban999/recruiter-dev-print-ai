@@ -19,7 +19,7 @@
     {
       "parameters": {
         "sessionIdType": "customKey",
-        "sessionKey": "={{ $json.sessionId || $json.headers.cookie.match(/session_id=([^;]+)/)[1] }}"
+        "sessionKey": "={{ $json.sessionId || $json.headers.cookie }}"
       },
       "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
       "typeVersion": 1.3,
