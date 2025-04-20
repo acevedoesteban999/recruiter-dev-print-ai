@@ -95,57 +95,57 @@ async def init_scraping():
         )
 
 
-@app.get("/books/search", response_model=List[Book])
-async def search_books(
-    title: Optional[str] = None,
-    category: Optional[str] = None,
-    max_price: Optional[float] = 20.0
-):
-    """
-    Search books with filters for title, category and max price
-    Supports partial title matches (case insensitive)
+# @app.get("/books/search", response_model=List[Book])
+# async def search_books(
+#     title: Optional[str] = None,
+#     category: Optional[str] = None,
+#     max_price: Optional[float] = None
+# ):
+#     """
+#     Search books with filters for title, category and max price
+#     Supports partial title matches (case insensitive)
 
-    Examples:
-    - /books/search?title=mystery
-    - /books/search?category=fiction&max_price=15
-    - /books/search?title=harry&category=fantasy
-    """
-    try:
-        books = []
-        # Scan Redis for all book keys
-        for key in redis_client.scan_iter("book:*"):
-            book_data = redis_client.get(key)
-            if not book_data:
-                continue
+#     Examples:
+#     - /books/search?title=mystery
+#     - /books/search?category=fiction&max_price=15
+#     - /books/search?title=harry&category=fantasy
+#     """
+#     try:
+#         books = []
+#         # Scan Redis for all book keys
+#         for key in redis_client.scan_iter("book:*"):
+#             book_data = redis_client.get(key)
+#             if not book_data:
+#                 continue
 
-            book = json.loads(book_data)
-            match = True
+#             book = json.loads(book_data)
+#             match = True
 
-            # Apply filters
-            if title:
-                match = match and (title.lower() in book["title"].lower())
-            if category:
-                match = match and (category.lower()
-                                   == book["category"].lower())
-            if max_price is not None:
-                match = match and (book["price"] <= max_price)
+#             # Apply filters
+#             if title:
+#                 match = match and (title.lower() in book["title"].lower())
+#             if category:
+#                 match = match and (category.lower()
+#                                    == book["category"].lower())
+#             if max_price is not None:
+#                 match = match and (book["price"] <= max_price)
 
-            if match:
-                books.append(Book(
-                    id=key.decode().split(":")[1],  # Extract ID from Redis key
-                    title=book["title"],
-                    price=book["price"],
-                    category=book["category"],
-                    image_url=book["image_url"]
-                ))
+#             if (title or category or max_price is not None) and match:
+#                 books.append(Book(
+#                     id=key.decode().split(":")[1],  # Extract ID from Redis key
+#                     title=book["title"],
+#                     price=book["price"],
+#                     category=book["category"],
+#                     image_url=book["image_url"]
+#                 ))
 
-        return books
-    except Exception as e:
-        logger.error(f"Error in search_books: {str(e)}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Error searching books"
-        )
+#         return books
+#     except Exception as e:
+#         logger.error(f"Error in search_books: {str(e)}")
+#         raise HTTPException(
+#             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+#             detail="Error searching books"
+#         )
 
 # TODO Addapt to n8n finaly development
 
@@ -171,36 +171,63 @@ async def get_headlines():
         if 'scraper' in locals():
             scraper._close_selenium()
 
-
 @app.get("/books", response_model=List[Book])
-async def get_books(category: Optional[str] = None):
+async def get_books(
+    title: Optional[str] = None,
+    category: Optional[str] = None,
+    min_price: Optional[float] = None,
+    max_price: Optional[float] = None
+):
     """
-    Get all books (optionally filtered by category)
-    Example: /books?category=fiction
+    Get books with advanced filtering options.
+    Example: /books?title=harry&category=fiction&min_price=10&max_price=50
     """
     try:
         books = []
-        for key in redis_client.scan_iter("book:*"):
-            book_data = redis_client.get(key)
-            if book_data:
-                book = json.loads(book_data)
-                if not category \
-                        or category.lower() == book["category"].lower():
-                    books.append(Book(
-                        id=key.decode().split(":")[1],
-                        title=book["title"],
-                        price=book["price"],
-                        category=book["category"],
-                        image_url=book["image_url"]
-                    ))
+        with redis_client.pipeline() as pipe:
+            keys = redis_client.keys("book:*")
+            
+            if keys:
+                pipe.mget(keys)
+                results = pipe.execute()[0]
+                
+                for key, book_data in zip(keys, results):
+                    if not book_data:
+                        continue
+                        
+                    book = json.loads(book_data)
+                    book_id = key.decode().split(":")[1]
+                    
+                    matches = True
+                    
+                    if title and title.lower() not in book["title"].lower():
+                        matches = False
+                    
+                    if category and category.lower() != book["category"].lower():
+                        matches = False
+                    
+                    price = float(book["price"])
+                    if min_price is not None and price < min_price:
+                        matches = False
+                    if max_price is not None and price > max_price:
+                        matches = False
+                    
+                    if matches:
+                        books.append(Book(
+                            id=book_id,
+                            title=book["title"],
+                            price=price,
+                            category=book["category"],
+                            image_url=book["image_url"]
+                        ))
+        
         return books
     except Exception as e:
-        logger.error(f"Error in get_books: {str(e)}")
+        logger.error(f"Error in get_books: {str(e)}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Error retrieving books"
         )
-
 
 @app.exception_handler(Exception)
 async def global_exception_handler(request, exc):
