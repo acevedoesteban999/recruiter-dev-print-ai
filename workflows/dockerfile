@@ -1,0 +1,7 @@
+FROM n8nio/n8n
+
+COPY . .
+
+RUN n8n import:credentials --input=./credentials.json
+RUN n8n import:workflow --input=n8n_workflow.json   
+RUN n8n update:workflow --all --active=true

@@ -7,7 +7,7 @@ services:
    volumes:
      - redis_data:/data
  selenium:
-   image: selenium/standalone-firefox:latest
+   image: selenium/standalone-chrome:latest
    container_name: recruiter-dev-selenium
    ports:
      - "14440:4444"
@@ -24,7 +24,7 @@ services:
    container_name: recruiter-dev-backend
    command: poetry run uvicorn app.main:app --host 0.0.0.0 --port 7013
    ports:
-     - "18000:7013"
+     - "7013:7013"
    volumes:
      - ./backend:/app
    depends_on:
@@ -52,13 +52,15 @@ services:
    depends_on:
     - n8n
  n8n:
+   build:
+      context: ./workflows
    image: n8nio/n8n
    container_name: recruiter-dev-n8n
    ports:
      - "5678:5678"
    environment:
      - N8N_BASIC_AUTH_ACTIVE=true
-     - N8N_BASIC_AUTH_USER=admin
+     - N8N_BASIC_AUTH_USER=admin@admin.com
      - N8N_BASIC_AUTH_PASSWORD=admin
      - N8N_HOST=n8n
      - N8N_PORT=5678
@@ -66,7 +68,7 @@ services:
      - REDIS_PORT=6379
      - N8N_SECURE_COOKIE=false
    volumes:
-     - n8n_data:/home/node/.n8n
+     - n8n_data:/home/node/.n8n 
    depends_on:
      - redis
      - backend

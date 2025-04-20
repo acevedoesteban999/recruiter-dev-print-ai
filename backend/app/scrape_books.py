@@ -8,6 +8,7 @@ import redis
 from dotenv import load_dotenv
 from urllib.parse import urljoin
 
+
 # Configure logging as required by project specifications
 logging.basicConfig(
     level=logging.INFO,
@@ -104,7 +105,7 @@ class BookScraper(ScrapeBase):
                     if self.scraped_books >= self.MAX_BOOKS:
                         break  # Stop if max books reached
 
-                logger.warning(f"Scraped {self.scraped_books} books in page {current_url}")
+                logger.info(f"Scraped {self.scraped_books} books in page {current_url}")
 
                 # Pagination logic
                 if self.scraped_books < self.MIN_BOOKS:
