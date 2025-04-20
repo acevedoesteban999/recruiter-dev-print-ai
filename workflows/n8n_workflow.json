@@ -91,8 +91,8 @@
     },
     {
       "parameters": {
-        "toolDescription": "Usa parámetros GET (name, category o price) con formato URL-encoded. Solo permite 1 filtro por consulta (ej: ?price=20). Para rangos, haz dos consultas separadas (ej: ?price_min=10 y ?price_max=20) y cruza los resultados. Ejemplo: /libros?category=ciencia-ficcion. Se debe manejar múltiples filtros ejecutando consultas individuales y combinando resultados",
-        "url": "=http://backend:7013/books/search?{filters}"
+        "toolDescription": "Usa parámetros GET (title, category , price_min o price_max) con formato URL-encoded. Se debe manejar múltiples filtros ejecutando consultas individuales y combinando resultados",
+        "url": "=http://backend:7013/books?{filters}"
       },
       "type": "@n8n/n8n-nodes-langchain.toolHttpRequest",
       "typeVersion": 1.1,
